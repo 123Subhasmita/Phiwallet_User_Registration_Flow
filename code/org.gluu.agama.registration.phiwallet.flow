@@ -93,7 +93,7 @@ maxJourney = Repeat 6 times max
                                                   When emailOtpCreds.resend is "yes"
                                                        Log "@info User has requested a new code."
                                                        // Resend Email otp
-                                                       otpCode = Call userRegistrationService sendEmail email
+                                                       otpCode = Call userRegistrationService sendEmail email lang
                                                        When otpCode is null
                                                             Log "@info Fail to resend new code to user. " otpCode
                                                             // Provide feedback about the otp resend error to user.
@@ -128,8 +128,8 @@ maxJourney = Repeat 6 times max
                                              uiFeedback.errorMessage = "You have reached the maximun email OTP verification"
                                              // Email OTP verification loop completed
                                              Log "@info Email OTP verification loop completed"
-                                             it_gyjwr = {success:false, error: "User update flow reached max attempts. Try later"}
-                                             Finish it_gyjwr
+                                             it_odoto = {success:false, error: "User update flow reached max attempts. Try later"}
+                                             Finish it_odoto
                                         Otherwise
                                              // Password and Confirm password doesn't match
                                              Log "@trace Password and Confirm password doesn't match"
@@ -163,5 +163,5 @@ maxJourney = Repeat 6 times max
 // Maximum attempt reached
 Log "@info Maximum attempt reached"
 // User Registration flow failed
-it_apmiq = {success:false, error: "User registration flow reached max attempts try later"}
-Finish it_apmiq
+it_xiyct = {success:false, error: "User registration flow reached max attempts try later"}
+Finish it_xiyct
