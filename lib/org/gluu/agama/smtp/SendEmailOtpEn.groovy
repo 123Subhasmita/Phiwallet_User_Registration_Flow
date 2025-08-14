@@ -19,7 +19,7 @@ class SendEmailOtpEn {
         </tr>
         <tr>
             <td style="border-top: 1px solid #e0e0e0; padding-top: 20px;">
-                <p style="font-size: 18px; font-weight: bold; margin: 0;">Dear ${givenName},</p>
+                <p style="font-size: 18px; font-weight: bold; margin: 0;">Hii</p>
                 <p style="font-size: 16px; color: #555; margin: 10px 0;">
                     Enter the 6-digit code below to verify your email address.
                 </p>
