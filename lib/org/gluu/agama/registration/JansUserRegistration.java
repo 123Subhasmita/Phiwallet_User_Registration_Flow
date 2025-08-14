@@ -97,28 +97,28 @@ public class JansUserRegistration extends UserRegistration {
         return pwd1 != null && pwd1.equals(pwd2);
     }
 
-    public String sendEmail(String email, String lang) {
+    @Override
+    public String sendEmail(String to, String lang) {
         try {
-            // Get SMTP configuration
+            // Get SMTP config
             SmtpConfiguration smtpConfiguration = getSmtpConfiguration();
             if (smtpConfiguration == null) {
                 logger.error("SMTP configuration is missing.");
                 return null;
             }
-
-            // Use lang directly from user input (lowercase to normalize)
-            String preferredLang = (lang != null && !lang.isEmpty()) ? lang.toLowerCase() : "en";
-
-            // Generate OTP
-            StringBuilder otpBuilder = new StringBuilder();
-            for (int i = 0; i < OTP_LENGTH; i++) {
-                otpBuilder.append(RAND.nextInt(10)); // 0–9
+    
+            // If lang is null or empty, fallback to English
+            if (lang == null || lang.isEmpty()) {
+                lang = "en";
             }
-            String otp = otpBuilder.toString();
-
-            // Pick correct localized template (pass OTP only, no givenName)
+            lang = lang.toLowerCase();
+    
+            // Generate OTP
+            String otp = generateOtpCode(OTP_LENGTH);
+    
+            // Select correct template based on lang
             Map<String, String> templateData;
-            switch (preferredLang) {
+            switch (lang) {
                 case "ar":
                     templateData = SendEmailOtpTemplateAr.get(otp);
                     break;
@@ -138,36 +138,37 @@ public class JansUserRegistration extends UserRegistration {
                     templateData = SendEmailOtpTemplateEn.get(otp);
                     break;
             }
-
+    
             String subject = templateData.get("subject");
             String htmlBody = templateData.get("body");
             String textBody = htmlBody.replaceAll("\\<.*?\\>", "");
-
-            // Send email
+    
+            // Send the email
             MailService mailService = CdiUtil.bean(MailService.class);
             boolean sent = mailService.sendMailSigned(
                     smtpConfiguration.getFromEmailAddress(),
                     smtpConfiguration.getFromName(),
-                    email,
+                    to,
                     null,
                     subject,
                     textBody,
                     htmlBody
             );
-
+    
             if (sent) {
-                logger.debug("Localized OTP email sent to {} with code {}", email, otp);
+                logger.debug("Localized OTP email sent to {} with code {}", to, otp);
                 return otp;
             } else {
-                logger.error("Failed to send localized OTP email to {}", email);
+                logger.error("Failed to send localized OTP email to {}", to);
                 return null;
             }
-
+    
         } catch (Exception e) {
-            logger.error("Error sending OTP email: {}", e.getMessage());
+            logger.error("Error sending OTP email: {}", e.getMessage(), e);
             return null;
         }
     }
+
 
     public String sendOTPCode(String phone) {
         try {
