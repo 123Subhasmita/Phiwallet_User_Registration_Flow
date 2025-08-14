@@ -1,0 +1,35 @@
+{
+    "projectName": "agama-phiwallet-registration",
+    "description": "Designing an Agama Flow for seamless user registration with validation and authentication.",
+    "type": "community",
+    "author": "PhiWallet",
+    "version": "1.0.5",
+    "authorWebsite": "https://github.com/GluuFederation/agama-registration",
+    "githubUri": "https://github.com/GluuFederation/agama-registration",
+    "license": "apache-2.0",
+    "lastUpdated": "1739300950582",
+    "tags": [
+        "jans",
+        "community",
+        "authentication"
+    ],
+    "noDirectLaunch": [
+        "org.gluu.agama.registration.emailVerification.flow"
+    ],
+    "configs": {
+        "org.gluu.agama.registration.phiwallet": {
+            "ACCOUNT_SID": "PUT_YOUR_TWILIO_ACCOUNT_SID_HERE",
+            "AUTH_TOKEN": "PUT_YOUR_TWILIO_AUTH_TOKEN_HERE",
+            "FROM_NUMBER": "PUT_YOUR_TWILIO_FROM_NUMBER_HERE"
+        },
+        "": {
+            "ACCOUNT_SID": "PUT_YOUR_TWILIO_ACCOUNT_SID_HERE",
+            "AUTH_TOKEN": "PUT_YOUR_TWILIO_AUTH_TOKEN_HERE",
+            "FROM_NUMBER": "PUT_YOUR_TWILIO_FROM_NUMBER_HERE"
+        },
+        "org.gluu.agama.registration.emailVerification.flow": {},
+        "org.gluu.agama.registration.smsVerification": {},
+        "org.gluu.agama.registration.smsOTPVerification": {}
+    },
+    "name": "agama-phiwallet-registration"
+}
