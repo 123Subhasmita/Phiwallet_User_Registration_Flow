@@ -98,34 +98,96 @@ public class JansUserRegistration extends UserRegistration {
     }
 
     public String sendEmail(String to) {
+        try {
+            // Get SMTP configuration
+            SmtpConfiguration smtpConfiguration = getSmtpConfiguration();
+            if (smtpConfiguration == null) {
+                logger.error("SMTP configuration is missing.");
+                return null;
+            }
 
-        SmtpConfiguration smtpConfiguration = getSmtpConfiguration();
+            // 1️⃣ Fetch givenName and preferredLanguage from user profile
+            String givenName = "User";
+            String preferredLang = "en";
 
-        StringBuilder otpBuilder = new StringBuilder();
-        for (int i = 0; i < OTP_LENGTH; i++) {
-            otpBuilder.append(RAND.nextInt(10)); // Generates 0–9
+            try {
+                UserService userService = CdiUtil.bean(UserService.class);
+                User user = userService.getUserByAttribute("mail", to, true, null);
+                if (user != null) {
+                    String gn = user.getAttribute("givenName", true);
+                    if (gn != null && !gn.isEmpty()) {
+                        givenName = gn;
+                    }
+
+                    String lang = user.getAttribute("preferredLanguage", true);
+                    if (lang != null && !lang.isEmpty()) {
+                        preferredLang = lang.toLowerCase();
+                    }
+                }
+            } catch (Exception ex) {
+                logger.error("Error fetching user profile for email {}: {}", to, ex.getMessage());
+            }
+
+            // 2️⃣ Generate OTP
+            StringBuilder otpBuilder = new StringBuilder();
+            for (int i = 0; i < OTP_LENGTH; i++) {
+                otpBuilder.append(RAND.nextInt(10)); // 0–9
+            }
+            String otp = otpBuilder.toString();
+
+            // 3️⃣ Pick correct localized template
+            Map<String, String> templateData;
+            switch (preferredLang) {
+                case "ar":
+                    templateData = SendEmailOtpTemplateAr.get(otp, givenName);
+                    break;
+                case "es":
+                    templateData = SendEmailOtpTemplateEs.get(otp, givenName);
+                    break;
+                case "fr":
+                    templateData = SendEmailOtpTemplateFr.get(otp, givenName);
+                    break;
+                case "id":
+                    templateData = SendEmailOtpTemplateId.get(otp, givenName);
+                    break;
+                case "pt":
+                    templateData = SendEmailOtpTemplatePt.get(otp, givenName);
+                    break;
+                default:
+                    templateData = SendEmailOtpTemplateEn.get(otp, givenName);
+                    break;
+            }
+
+            String subject = templateData.get("subject");
+            String htmlBody = templateData.get("body");
+            String textBody = htmlBody.replaceAll("\\<.*?\\>", "");
+
+            // 4️⃣ Send email
+            MailService mailService = CdiUtil.bean(MailService.class);
+            boolean sent = mailService.sendMailSigned(
+                    smtpConfiguration.getFromEmailAddress(),
+                    smtpConfiguration.getFromName(),
+                    to,
+                    null,
+                    subject,
+                    textBody,
+                    htmlBody
+            );
+
+            if (sent) {
+                logger.debug("Localized OTP email sent to {} with code {}", to, otp);
+                return otp;
+            } else {
+                logger.error("Failed to send localized OTP email to {}", to);
+                return null;
+            }
+
+        } catch (Exception e) {
+            logger.error("Error sending OTP email: {}", e.getMessage());
+            return null;
         }
-        String otp = otpBuilder.toString();
-
-        String from = smtpConfiguration.getFromEmailAddress();
-        String subject = String.format(SUBJECT_TEMPLATE, otp);
-        String textBody = String.format(MSG_TEMPLATE_TEXT, otp);
-        ContextData context = new ContextData();
-        context.setDevice("Unknown");
-        context.setTimeZone("Unknown");
-        context.setLocation("Unknown");
-        String htmlBody = EmailTemplate.get(otp, context);
-
-        MailService mailService = CdiUtil.bean(MailService.class);
-
-        if (mailService.sendMailSigned(from, from, to, null, subject, textBody, htmlBody)) {
-            logger.debug("E-mail has been delivered to {} with code {}", to, otp);
-            return otp;
-        }
-        logger.debug("E-mail delivery failed, check jans-auth logs");
-        return null;
-
     }
+
 
     public String sendOTPCode(String phone) {
         try {
