@@ -19,7 +19,7 @@ class SendEmailOtpAr {
         </tr>
         <tr>
             <td style="border-top: 1px solid #e0e0e0; padding-top: 20px;">
-                <p style="font-size: 18px; font-weight: bold; margin: 0;">مرحباً، ${givenName}</p>
+                <p style="font-size: 18px; font-weight: bold; margin: 0;">ب</p>
                 <p style="font-size: 16px; color: #555; margin: 10px 0;">
                     يرجى إدخال الرمز المكون من 6 أرقام أدناه للتحقق من بريدك الإلكتروني.
                 </p>
