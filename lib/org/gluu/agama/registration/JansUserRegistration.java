@@ -97,7 +97,7 @@ public class JansUserRegistration extends UserRegistration {
         return pwd1 != null && pwd1.equals(pwd2);
     }
 
-    public String sendEmail(String to) {
+    public String sendEmail(String email, String lang) {
         try {
             // Get SMTP configuration
             SmtpConfiguration smtpConfiguration = getSmtpConfiguration();
@@ -106,55 +106,36 @@ public class JansUserRegistration extends UserRegistration {
                 return null;
             }
 
-            // 1️⃣ Fetch givenName and preferredLanguage from user profile
-            String givenName = "User";
-            String preferredLang = "en";
+            // Use lang directly from user input (lowercase to normalize)
+            String preferredLang = (lang != null && !lang.isEmpty()) ? lang.toLowerCase() : "en";
 
-            try {
-                UserService userService = CdiUtil.bean(UserService.class);
-                User user = userService.getUserByAttribute("mail", to, true, null);
-                if (user != null) {
-                    String gn = user.getAttribute("givenName", true);
-                    if (gn != null && !gn.isEmpty()) {
-                        givenName = gn;
-                    }
-
-                    String lang = user.getAttribute("preferredLanguage", true);
-                    if (lang != null && !lang.isEmpty()) {
-                        preferredLang = lang.toLowerCase();
-                    }
-                }
-            } catch (Exception ex) {
-                logger.error("Error fetching user profile for email {}: {}", to, ex.getMessage());
-            }
-
-            // 2️⃣ Generate OTP
+            // Generate OTP
             StringBuilder otpBuilder = new StringBuilder();
             for (int i = 0; i < OTP_LENGTH; i++) {
                 otpBuilder.append(RAND.nextInt(10)); // 0–9
             }
             String otp = otpBuilder.toString();
 
-            // 3️⃣ Pick correct localized template
+            // Pick correct localized template (pass OTP only, no givenName)
             Map<String, String> templateData;
             switch (preferredLang) {
                 case "ar":
-                    templateData = SendEmailOtpTemplateAr.get(otp, givenName);
+                    templateData = SendEmailOtpTemplateAr.get(otp);
                     break;
                 case "es":
-                    templateData = SendEmailOtpTemplateEs.get(otp, givenName);
+                    templateData = SendEmailOtpTemplateEs.get(otp);
                     break;
                 case "fr":
-                    templateData = SendEmailOtpTemplateFr.get(otp, givenName);
+                    templateData = SendEmailOtpTemplateFr.get(otp);
                     break;
                 case "id":
-                    templateData = SendEmailOtpTemplateId.get(otp, givenName);
+                    templateData = SendEmailOtpTemplateId.get(otp);
                     break;
                 case "pt":
-                    templateData = SendEmailOtpTemplatePt.get(otp, givenName);
+                    templateData = SendEmailOtpTemplatePt.get(otp);
                     break;
                 default:
-                    templateData = SendEmailOtpTemplateEn.get(otp, givenName);
+                    templateData = SendEmailOtpTemplateEn.get(otp);
                     break;
             }
 
@@ -162,12 +143,12 @@ public class JansUserRegistration extends UserRegistration {
             String htmlBody = templateData.get("body");
             String textBody = htmlBody.replaceAll("\\<.*?\\>", "");
 
-            // 4️⃣ Send email
+            // Send email
             MailService mailService = CdiUtil.bean(MailService.class);
             boolean sent = mailService.sendMailSigned(
                     smtpConfiguration.getFromEmailAddress(),
                     smtpConfiguration.getFromName(),
-                    to,
+                    email,
                     null,
                     subject,
                     textBody,
@@ -175,10 +156,10 @@ public class JansUserRegistration extends UserRegistration {
             );
 
             if (sent) {
-                logger.debug("Localized OTP email sent to {} with code {}", to, otp);
+                logger.debug("Localized OTP email sent to {} with code {}", email, otp);
                 return otp;
             } else {
-                logger.error("Failed to send localized OTP email to {}", to);
+                logger.error("Failed to send localized OTP email to {}", email);
                 return null;
             }
 
@@ -187,7 +168,6 @@ public class JansUserRegistration extends UserRegistration {
             return null;
         }
     }
-
 
     public String sendOTPCode(String phone) {
         try {
